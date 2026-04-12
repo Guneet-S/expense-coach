@@ -193,7 +193,7 @@ export default function App() {
   }
 
   return (
-    <AppProvider>
+    <AppProvider spaceId={session.spaceId}>
       <Dashboard session={session} onLogout={handleLogout} />
     </AppProvider>
   );

@@ -9,11 +9,12 @@ import {
   resetAll,
   addCategory,
   addUser,
+  cleanupRootCollections,
 } from "../firebase/firestore";
 
 const AppContext = createContext(null);
 
-export function AppProvider({ children }) {
+export function AppProvider({ children, spaceId }) {
   const [users, setUsers] = useState([]);
   const [categories, setCategories] = useState([]);
   const [transactions, setTransactions] = useState([]);
@@ -23,9 +24,9 @@ export function AppProvider({ children }) {
   const reload = useCallback(async () => {
     try {
       const [u, c, t] = await Promise.all([
-        fetchUsers(),
-        fetchCategories(),
-        fetchTransactions(),
+        fetchUsers(spaceId),
+        fetchCategories(spaceId),
+        fetchTransactions(spaceId),
       ]);
       setUsers(u);
       setCategories(c);
@@ -33,7 +34,7 @@ export function AppProvider({ children }) {
     } catch (err) {
       setError(err.message);
     }
-  }, []);
+  }, [spaceId]);
 
   useEffect(() => {
     let settled = false;
@@ -48,6 +49,8 @@ export function AppProvider({ children }) {
 
     async function init() {
       try {
+        // One-time cleanup of stale root-level collections (safe no-op if already clean)
+        await cleanupRootCollections();
         await reload();
       } catch (err) {
         if (!settled) setError(err.message);
@@ -65,32 +68,32 @@ export function AppProvider({ children }) {
   }, [reload]);
 
   async function logExpense(data) {
-    await addTransaction(data);
+    await addTransaction(spaceId, data);
     await reload();
   }
 
   async function removeTransaction(tx) {
-    await deleteTransaction(tx);
+    await deleteTransaction(spaceId, tx);
     await reload();
   }
 
   async function editCategoryBudget(categoryId, newAmount) {
-    await updateCategoryBudget(categoryId, newAmount);
+    await updateCategoryBudget(spaceId, categoryId, newAmount);
     await reload();
   }
 
   async function doResetAll() {
-    await resetAll();
+    await resetAll(spaceId);
     await reload();
   }
 
   async function addNewCategory(data) {
-    await addCategory(data);
+    await addCategory(spaceId, data);
     await reload();
   }
 
   async function addNewUser(data) {
-    await addUser(data);
+    await addUser(spaceId, data);
     await reload();
   }
 
