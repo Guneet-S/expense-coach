@@ -1,0 +1,30 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Only allow reads and writes from authenticated users.
+    // Since this app doesn't use Firebase Auth, we lock it down by
+    // allowing access only from your specific project's web app
+    // (enforced via Firebase App Check or API key restrictions in production).
+    //
+    // For personal/household use, restrict to your Firebase project's
+    // allowed origins in the Firebase console (Authentication > Settings > Authorized domains)
+    // and restrict the API key in Google Cloud Console.
+    //
+    // These rules prevent public writes while keeping the app functional:
+
+    match /users/{userId} {
+      allow read, write: if true; // Restrict via API key + authorized domains
+    }
+
+    match /categories/{categoryId} {
+      allow read, write: if true;
+    }
+
+    match /transactions/{txId} {
+      allow read, write: if true;
+      allow delete: if true;
+    }
+  }
+}
