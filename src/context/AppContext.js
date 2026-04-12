@@ -1,13 +1,14 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import {
-  initMonthIfNeeded,
   fetchUsers,
   fetchCategories,
   fetchTransactions,
   addTransaction,
   deleteTransaction,
   updateCategoryBudget,
-  resetMonth,
+  resetAll,
+  addCategory,
+  addUser,
 } from "../firebase/firestore";
 
 const AppContext = createContext(null);
@@ -35,17 +36,32 @@ export function AppProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    async function init() {
-      try {
-        await initMonthIfNeeded();
-        await reload();
-      } catch (err) {
-        setError(err.message);
-      } finally {
+    let settled = false;
+
+    const timeoutId = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        setError("Loading timed out — Firebase may be unreachable. Check your network.");
         setLoading(false);
       }
+    }, 10000);
+
+    async function init() {
+      try {
+        await reload();
+      } catch (err) {
+        if (!settled) setError(err.message);
+      } finally {
+        clearTimeout(timeoutId);
+        if (!settled) {
+          settled = true;
+          setLoading(false);
+        }
+      }
     }
+
     init();
+    return () => { clearTimeout(timeoutId); settled = true; };
   }, [reload]);
 
   async function logExpense(data) {
@@ -63,13 +79,29 @@ export function AppProvider({ children }) {
     await reload();
   }
 
-  async function doResetMonth() {
-    await resetMonth();
+  async function doResetAll() {
+    await resetAll();
+    await reload();
+  }
+
+  async function addNewCategory(data) {
+    await addCategory(data);
+    await reload();
+  }
+
+  async function addNewUser(data) {
+    await addUser(data);
     await reload();
   }
 
   return (
-    <AppContext.Provider value={{ users, categories, transactions, loading, error, logExpense, removeTransaction, editCategoryBudget, doResetMonth, reload }}>
+    <AppContext.Provider value={{
+      users, categories, transactions,
+      loading, error,
+      logExpense, removeTransaction, editCategoryBudget,
+      doResetAll, addNewCategory, addNewUser,
+      reload,
+    }}>
       {children}
     </AppContext.Provider>
   );

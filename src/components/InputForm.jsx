@@ -16,7 +16,6 @@ export default function InputForm() {
   const [submitting, setSubmitting] = useState(false);
   const [msg, setMsg] = useState(null);
 
-  // Auto-categorize on description change
   useEffect(() => {
     if (description) {
       const suggestion = autoCategorize(description);
@@ -24,7 +23,6 @@ export default function InputForm() {
     }
   }, [description]);
 
-  // Set defaults once data loads
   useEffect(() => {
     if (categories.length && !categoryId) setCategoryId(categories[0].id);
     if (users.length && !paidByUserId) setPaidByUserId(users[0].id);
@@ -34,14 +32,14 @@ export default function InputForm() {
     e.preventDefault();
     const amt = parseFloat(amount);
     if (!amt || amt <= 0) {
-      setMsg({ type: "error", text: "Amount must be > 0" });
+      setMsg({ type: "error", text: "Amount must be greater than 0." });
       return;
     }
     setSubmitting(true);
     setMsg(null);
     try {
       await logExpense({ date, description, amount: amt, categoryId, paidByUserId });
-      setMsg({ type: "success", text: "Expense logged!" });
+      setMsg({ type: "success", text: "Expense logged successfully." });
       setAmount("");
       setDescription("");
       setDate(todayISO());
@@ -53,52 +51,69 @@ export default function InputForm() {
   }
 
   return (
-    <section className="bg-white rounded-2xl shadow p-6 mb-6">
-      <h2 className="text-xl font-bold text-gray-800 mb-4">Log Expense</h2>
+    <section className="card p-6">
+      <h2 className="section-title">Log Expense</h2>
+      {(categories.length === 0 || users.length === 0) && (
+        <div className="mb-4 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 text-sm text-amber-700">
+          {categories.length === 0 && users.length === 0
+            ? "Add people and categories first before logging expenses."
+            : categories.length === 0
+            ? "Add at least one category before logging expenses."
+            : "Add at least one person before logging expenses."}
+        </div>
+      )}
       <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Date */}
         <div>
-          <label className="block text-sm font-medium text-gray-600 mb-1">Date</label>
+          <label htmlFor="exp-date" className="field-label">Date</label>
           <input
+            id="exp-date"
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="input-field"
             required
           />
         </div>
 
+        {/* Amount */}
         <div>
-          <label className="block text-sm font-medium text-gray-600 mb-1">Amount (₹)</label>
+          <label htmlFor="exp-amount" className="field-label">Amount (₹)</label>
           <input
+            id="exp-amount"
             type="number"
             min="0"
             step="0.01"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            placeholder="0"
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            placeholder="0.00"
+            className="input-field"
             required
           />
         </div>
 
+        {/* Description */}
         <div className="sm:col-span-2">
-          <label className="block text-sm font-medium text-gray-600 mb-1">Description</label>
+          <label htmlFor="exp-desc" className="field-label">Description</label>
           <input
+            id="exp-desc"
             type="text"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="e.g. bought veg, atta 5kg"
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="input-field"
             required
           />
         </div>
 
+        {/* Category */}
         <div>
-          <label className="block text-sm font-medium text-gray-600 mb-1">Category</label>
+          <label htmlFor="exp-category" className="field-label">Category</label>
           <select
+            id="exp-category"
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="input-field cursor-pointer"
             required
           >
             <optgroup label="Fixed">
@@ -114,12 +129,14 @@ export default function InputForm() {
           </select>
         </div>
 
+        {/* Paid By */}
         <div>
-          <label className="block text-sm font-medium text-gray-600 mb-1">Paid By</label>
+          <label htmlFor="exp-paidby" className="field-label">Paid By</label>
           <select
+            id="exp-paidby"
             value={paidByUserId}
             onChange={(e) => setPaidByUserId(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="input-field cursor-pointer"
             required
           >
             {users.map((u) => (
@@ -128,18 +145,32 @@ export default function InputForm() {
           </select>
         </div>
 
+        {/* Submit */}
         <div className="sm:col-span-2">
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-semibold py-2 px-4 rounded-lg transition"
-          >
+          <button type="submit" disabled={submitting} className="btn-primary w-full">
             {submitting ? "Logging…" : "Log Expense"}
           </button>
         </div>
 
+        {/* Feedback */}
         {msg && (
-          <div className={`sm:col-span-2 text-sm font-medium ${msg.type === "error" ? "text-red-600" : "text-green-600"}`}>
+          <div
+            role="status"
+            className={`sm:col-span-2 flex items-center gap-2 text-sm font-medium rounded-lg px-4 py-3 ${
+              msg.type === "error"
+                ? "bg-red-50 text-red-700 border border-red-200"
+                : "bg-green-50 text-green-700 border border-green-200"
+            }`}
+          >
+            {msg.type === "error" ? (
+              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0zm-9 3.75h.008v.008H12v-.008z" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+              </svg>
+            )}
             {msg.text}
           </div>
         )}
