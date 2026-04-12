@@ -2,6 +2,10 @@
 
 A strict monthly household expense tracker built with React + Firebase Firestore.
 
+## Live App
+
+**Open on your phone:** https://guneet-s.github.io/expense-coach/
+
 ## Features
 
 - **Log expenses** with auto-categorization (type "veg", "atta", "milk" — it picks the category)
