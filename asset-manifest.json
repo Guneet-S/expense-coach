@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/expense-coach/static/css/main.46a2144e.css",
-    "main.js": "/expense-coach/static/js/main.9242b0db.js",
+    "main.js": "/expense-coach/static/js/main.44d83fc5.js",
     "index.html": "/expense-coach/index.html",
     "main.46a2144e.css.map": "/expense-coach/static/css/main.46a2144e.css.map",
-    "main.9242b0db.js.map": "/expense-coach/static/js/main.9242b0db.js.map"
+    "main.44d83fc5.js.map": "/expense-coach/static/js/main.44d83fc5.js.map"
   },
   "entrypoints": [
     "static/css/main.46a2144e.css",
-    "static/js/main.9242b0db.js"
+    "static/js/main.44d83fc5.js"
   ]
 }
