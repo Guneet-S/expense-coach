@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/expense-coach/static/css/main.25f5ee56.css",
+    "main.js": "/expense-coach/static/js/main.5db41b34.js",
+    "index.html": "/expense-coach/index.html",
+    "main.25f5ee56.css.map": "/expense-coach/static/css/main.25f5ee56.css.map",
+    "main.5db41b34.js.map": "/expense-coach/static/js/main.5db41b34.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.25f5ee56.css",
+    "static/js/main.5db41b34.js"
+  ]
+}
