@@ -5,8 +5,12 @@ import PersonSplitTable from "./components/PersonSplitTable";
 import CategoryBudgetOverview from "./components/CategoryBudgetOverview";
 import TransactionLog from "./components/TransactionLog";
 import CoachRealityCheck from "./components/CoachRealityCheck";
+import LoginScreen from "./components/LoginScreen";
+import { getSession, clearSession } from "./firebase/spaces";
 
-function Dashboard() {
+// ── Dashboard ──────────────────────────────────────────────────────────────
+
+function Dashboard({ session, onLogout }) {
   const { loading, error, reload, doResetAll } = useApp();
   const [confirmReset, setConfirmReset] = React.useState(false);
   const [resetting, setResetting] = React.useState(false);
@@ -47,9 +51,7 @@ function Dashboard() {
           </div>
           <p className="text-slate-800 font-semibold mb-1">Connection Error</p>
           <p className="text-slate-500 text-sm mb-5">{error}</p>
-          <button onClick={reload} className="btn-primary w-full">
-            Retry
-          </button>
+          <button onClick={reload} className="btn-primary w-full">Retry</button>
         </div>
       </div>
     );
@@ -68,40 +70,57 @@ function Dashboard() {
             </div>
             <div>
               <h1 className="text-sm font-semibold text-slate-900 leading-none">Expense Coach</h1>
-              <p className="text-xs text-slate-400 mt-0.5">Monthly Budget Tracker</p>
+              <p className="text-xs text-slate-400 mt-0.5">
+                {session?.userName && (
+                  <span>Hi, {session.userName} · Space <span className="font-mono">{session.spaceId}</span></span>
+                )}
+              </p>
             </div>
           </div>
-          <div className="flex flex-col items-end gap-1">
-            {confirmReset ? (
-              <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
-                <span className="text-xs font-semibold text-red-700 whitespace-nowrap">Wipe everything?</span>
+
+          <div className="flex items-center gap-2">
+            {/* Sign out */}
+            <button
+              onClick={onLogout}
+              className="text-xs text-slate-400 hover:text-slate-600 cursor-pointer transition-colors duration-150 px-2 py-1"
+              title="Sign out"
+            >
+              Sign out
+            </button>
+
+            {/* Reset */}
+            <div className="flex flex-col items-end gap-1">
+              {confirmReset ? (
+                <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
+                  <span className="text-xs font-semibold text-red-700 whitespace-nowrap">Wipe everything?</span>
+                  <button
+                    onClick={handleConfirmReset}
+                    disabled={resetting}
+                    className="text-xs font-bold text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 px-3 py-1 rounded-lg cursor-pointer transition-colors duration-150"
+                  >
+                    Yes, wipe it
+                  </button>
+                  <button
+                    onClick={() => { setConfirmReset(false); setResetError(null); }}
+                    className="text-xs font-medium text-slate-500 hover:text-slate-700 cursor-pointer transition-colors duration-150"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
                 <button
-                  onClick={handleConfirmReset}
+                  onClick={() => setConfirmReset(true)}
                   disabled={resetting}
-                  className="text-xs font-bold text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 px-3 py-1 rounded-lg cursor-pointer transition-colors duration-150"
+                  className="btn-danger"
+                  aria-label="Reset all data"
                 >
-                  Yes, wipe it
+                  {resetting ? "Resetting…" : "Reset"}
                 </button>
-                <button
-                  onClick={() => { setConfirmReset(false); setResetError(null); }}
-                  className="text-xs font-medium text-slate-500 hover:text-slate-700 cursor-pointer transition-colors duration-150"
-                >
-                  Cancel
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setConfirmReset(true)}
-                disabled={resetting}
-                className="btn-danger"
-                aria-label="Reset all data"
-              >
-                {resetting ? "Resetting…" : "Reset"}
-              </button>
-            )}
-            {resetError && (
-              <p className="text-xs text-red-600 font-medium max-w-xs text-right">{resetError}</p>
-            )}
+              )}
+              {resetError && (
+                <p className="text-xs text-red-600 font-medium max-w-xs text-right">{resetError}</p>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -118,10 +137,27 @@ function Dashboard() {
   );
 }
 
+// ── Root ───────────────────────────────────────────────────────────────────
+
 export default function App() {
+  const [session, setSession] = React.useState(() => getSession());
+
+  function handleLogin(newSession) {
+    setSession(newSession);
+  }
+
+  function handleLogout() {
+    clearSession();
+    setSession(null);
+  }
+
+  if (!session) {
+    return <LoginScreen onLogin={handleLogin} />;
+  }
+
   return (
     <AppProvider>
-      <Dashboard />
+      <Dashboard session={session} onLogout={handleLogout} />
     </AppProvider>
   );
 }
