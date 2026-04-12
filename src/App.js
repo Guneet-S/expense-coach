@@ -8,20 +8,71 @@ import CoachRealityCheck from "./components/CoachRealityCheck";
 import LoginScreen from "./components/LoginScreen";
 import { getSession, clearSession } from "./firebase/spaces";
 
+// ── Reset Modal ────────────────────────────────────────────────────────────
+
+function ResetModal({ onConfirm, onCancel, resetting, error }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center px-4"
+      style={{ backgroundColor: "rgba(0,0,0,0.45)" }}
+      onClick={onCancel}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="reset-modal-title"
+      >
+        <div className="w-11 h-11 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+          </svg>
+        </div>
+        <h2 id="reset-modal-title" className="text-base font-semibold text-slate-900 text-center mb-1">Reset everything?</h2>
+        <p className="text-sm text-slate-500 text-center mb-6">
+          This permanently wipes all transactions, categories, and users. There is no undo.
+        </p>
+        {error && (
+          <p className="text-xs text-red-600 font-medium text-center mb-4">{error}</p>
+        )}
+        <div className="flex gap-3">
+          <button
+            onClick={onCancel}
+            disabled={resetting}
+            className="flex-1 border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-sm py-2.5 rounded-xl transition-colors duration-150 cursor-pointer"
+            style={{ minHeight: 44 }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={resetting}
+            className="flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-semibold text-sm py-2.5 rounded-xl transition-colors duration-150 cursor-pointer"
+            style={{ minHeight: 44 }}
+          >
+            {resetting ? "Wiping…" : "Yes, wipe it"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Dashboard ──────────────────────────────────────────────────────────────
 
 function Dashboard({ session, onLogout }) {
   const { loading, error, reload, doResetAll } = useApp();
-  const [confirmReset, setConfirmReset] = React.useState(false);
+  const [showResetModal, setShowResetModal] = React.useState(false);
   const [resetting, setResetting] = React.useState(false);
   const [resetError, setResetError] = React.useState(null);
 
   async function handleConfirmReset() {
     setResetting(true);
     setResetError(null);
-    setConfirmReset(false);
     try {
       await doResetAll();
+      setShowResetModal(false);
     } catch (err) {
       setResetError(err.message);
     } finally {
@@ -89,38 +140,14 @@ function Dashboard({ session, onLogout }) {
             </button>
 
             {/* Reset */}
-            <div className="flex flex-col items-end gap-1">
-              {confirmReset ? (
-                <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
-                  <span className="text-xs font-semibold text-red-700 whitespace-nowrap">Wipe everything?</span>
-                  <button
-                    onClick={handleConfirmReset}
-                    disabled={resetting}
-                    className="text-xs font-bold text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 px-3 py-1 rounded-lg cursor-pointer transition-colors duration-150"
-                  >
-                    Yes, wipe it
-                  </button>
-                  <button
-                    onClick={() => { setConfirmReset(false); setResetError(null); }}
-                    className="text-xs font-medium text-slate-500 hover:text-slate-700 cursor-pointer transition-colors duration-150"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setConfirmReset(true)}
-                  disabled={resetting}
-                  className="btn-danger"
-                  aria-label="Reset all data"
-                >
-                  {resetting ? "Resetting…" : "Reset"}
-                </button>
-              )}
-              {resetError && (
-                <p className="text-xs text-red-600 font-medium max-w-xs text-right">{resetError}</p>
-              )}
-            </div>
+            <button
+              onClick={() => { setShowResetModal(true); setResetError(null); }}
+              disabled={resetting}
+              className="btn-danger"
+              aria-label="Reset all data"
+            >
+              {resetting ? "Resetting…" : "Reset"}
+            </button>
           </div>
         </div>
       </header>
@@ -133,6 +160,16 @@ function Dashboard({ session, onLogout }) {
         <CategoryBudgetOverview />
         <TransactionLog />
       </main>
+
+      {/* Reset modal */}
+      {showResetModal && (
+        <ResetModal
+          onConfirm={handleConfirmReset}
+          onCancel={() => { setShowResetModal(false); setResetError(null); }}
+          resetting={resetting}
+          error={resetError}
+        />
+      )}
     </div>
   );
 }
